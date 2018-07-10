@@ -6,7 +6,7 @@ from datetime import datetime
 AGENT_NAME = 'Kitsu'
 AGENT_LANGUAGES = [Locale.Language.English]
 AGENT_PRIMARY_PROVIDER = True
-AGENT_CONTRIBUTES_TO = [
+AGENT_ACCEPTS_FROM = [
     'com.plexapp.agents.thetvdb',
 	'com.plexapp.agents.themoviedb'
 ]
@@ -160,7 +160,7 @@ class KitsuTV(Agent.TV_Shows):
     name = AGENT_NAME
     languages = AGENT_LANGUAGES
     primary_provider = AGENT_PRIMARY_PROVIDER
-    contributes_to = AGENT_CONTRIBUTES_TO
+    accepts_from = AGENT_ACCEPTS_FROM
 
     def search(self, results, media, lang, manual):
         Log.Info('[' + AGENT_NAME + '] Received a search for KitsuTV.')
@@ -194,6 +194,7 @@ class KitsuMovie(Agent.Movies):
     name = AGENT_NAME
     languages = AGENT_LANGUAGES
     primary_provider = AGENT_PRIMARY_PROVIDER
+    accepts_from = AGENT_ACCEPTS_FROM
 
     def search(self, results, media, lang, manual):
         Log.Info('Got a search for Movie.')
