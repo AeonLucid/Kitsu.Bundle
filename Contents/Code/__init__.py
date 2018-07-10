@@ -24,9 +24,8 @@ def cleanText(text):
     ''' Returns the string without non ASCII characters'''
     return re.sub(r'[^\x00-\x7F]+',' ', text)
 
-def matchAnime(results, media, search_type):
-    search_name = cleanText(media.show if search_type == 'tv' else media.name)
-    search_year = media.year
+def matchAnime(results, search_name, search_year):
+    search_name = cleanText(search_name)
 
     Log.Info('[' + AGENT_NAME + '] Searching for "' + search_name + ' (' + str(search_year) + ')"')
 
@@ -38,11 +37,6 @@ def matchAnime(results, media, search_type):
         anime_title = anime['attributes']['canonicalTitle']
         anime_titles = anime['attributes']['titles']
         anime_year = anime['attributes']['startDate'].split('-')[0]
-
-        if 'en' in anime_titles and anime_titles['en'] is not None:
-            anime_title = anime_titles['en']
-        elif 'en_jp' in anime_titles and anime_titles['en_jp'] is not None:
-            anime_title = anime_titles['en_jp']
 
         for title_key, title in anime_titles.iteritems():
             if title is not None:
@@ -69,7 +63,7 @@ def applyAnime(metadata, anime):
 
         metadata.genres = anime_genres
 
-    if Prefs['apply_studio']
+    if Prefs['apply_studio']:
         anime_studio = None
         search_productions = kitsu.anime.get_productions(metadata.id)
         if search_productions is not None:
@@ -131,7 +125,7 @@ def applyAnime(metadata, anime):
     if Prefs['apply_originally_available_at']:
         metadata.originally_available_at = datetime.strptime(str(anime['startDate']), '%Y-%m-%d')
     
-    if Prefs['apply_content_rating']
+    if Prefs['apply_content_rating']:
         metadata.content_rating = anime['ageRating']
 
     # metadata.countries = ? Countries involved in production of the show
@@ -170,7 +164,24 @@ class KitsuTV(Agent.TV_Shows):
 
     def search(self, results, media, lang, manual):
         Log.Info('[' + AGENT_NAME + '] Received a search for KitsuTV.')
-        matchAnime(results, media, 'tv')
+
+        # Just hope this never goes wrong.
+        if media.primary_metadata:
+            media_name = media.primary_metadata.title
+            media_year = None
+
+            try:
+                media_year = media.primary_metadata.originally_available_at.year
+            except:
+                pass
+            
+            matchAnime(results, media_name, media_year)
+            return
+        
+        # Normal search.
+        Log.Info(media.primary_metadata)
+        Log.Info(media.primary_agent)
+        matchAnime(results, media.show, media.year)
         return
 
     def update(self, metadata, media, lang, force):
@@ -178,6 +189,7 @@ class KitsuTV(Agent.TV_Shows):
         updateAnimeTV(metadata, media)
         return
 
+# Untested.
 class KitsuMovie(Agent.Movies):
     name = AGENT_NAME
     languages = AGENT_LANGUAGES
@@ -185,8 +197,10 @@ class KitsuMovie(Agent.Movies):
 
     def search(self, results, media, lang, manual):
         Log.Info('Got a search for Movie.')
+        matchAnime(results, media.name, media.year)
         return
 
     def update(self, metadata, media, lang, force):
         Log.Info('Got a update for Movie.')
+        updateAnimeTV(metadata, media)
         return
