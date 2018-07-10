@@ -34,7 +34,6 @@ def matchAnime(results, media, search_type):
     search_results = kitsu.anime.search(search_name, search_year)
 
     for i, anime in enumerate(search_results['data']):
-        Log.Info(i)
         match_score = 0
         anime_id = anime['id']
         anime_title = anime['attributes']['canonicalTitle']
@@ -109,7 +108,7 @@ def applyAnime(metadata, anime):
     # metadata.collections = ?
     metadata.duration = (int(anime['episodeLength']) * 60 * 1000) if anime['episodeLength'] is not None else None
     metadata.rating = float(anime['averageRating']) / 10
-    metadata.title = (anime['titles']['en'] if 'en' in anime['titles'] else anime['canonicalTitle'])
+    metadata.title = anime['canonicalTitle']
     metadata.summary = anime['synopsis'] + summary_append
     metadata.originally_available_at = datetime.strptime(str(anime['startDate']), '%Y-%m-%d')
     metadata.content_rating = anime['ageRating']
@@ -139,7 +138,6 @@ def updateAnimeTV(metadata, media):
 
     anime_result = kitsu.anime.get(metadata.id)['data']
     anime = anime_result['attributes']
-    anime_relationships = anime_result['relationships']
 
     applyAnime(metadata, anime)
 
