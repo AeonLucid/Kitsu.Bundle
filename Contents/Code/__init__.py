@@ -6,10 +6,9 @@ from datetime import datetime
 AGENT_NAME = 'Kitsu'
 AGENT_LANGUAGES = [Locale.Language.English]
 AGENT_PRIMARY_PROVIDER = True
-AGENT_ACCEPTS_FROM = [
-    'com.plexapp.agents.localmedia', 
-    'com.plexapp.agents.opensubtitles',
-    'com.plexapp.agents.subzero'
+AGENT_CONTRIBUTES_TO = [
+    'com.plexapp.agents.thetvdb',
+	'com.plexapp.agents.themoviedb'
 ]
 
 kitsu = KitsuClient()
@@ -61,77 +60,97 @@ def matchAnime(results, media, search_type):
 # Apply data of an anime object from kitsu to a metadata object.
 # Can be a movie or tvshow.
 def applyAnime(metadata, anime):
-    # Fetch genres
-    anime_genres = []
-    search_genres = kitsu.anime.get_genres(metadata.id)
-    if search_genres is not None:
-        for genre_data in search_genres['data']:
-            anime_genres.append(genre_data['attributes']['name'])
+    if Prefs['apply_genres']:
+        anime_genres = []
+        search_genres = kitsu.anime.get_genres(metadata.id)
+        if search_genres is not None:
+            for genre_data in search_genres['data']:
+                anime_genres.append(genre_data['attributes']['name'])
 
-    # Fetch production data
-    anime_studio = None
-    search_productions = kitsu.anime.get_productions(metadata.id)
-    if search_productions is not None:
-        for production_data in search_productions['data']:
-            if production_data['attributes']['role'] == 'studio':
-                producer = kitsu.anime_productions.get_producer(production_data['id'])
-                if producer is not None:
-                    anime_studio = producer['data']['attributes']['name']
-    
-    # Fetch extra summary data
-    summary_append = ''
-    search_reactions = kitsu.media_reactions.get(metadata.id)
-    if search_reactions is not None and search_reactions['data'][0] is not None:
-        reaction = search_reactions['data'][0]
-        user = kitsu.media_reactions.get_user(reaction['id'])
-        summary_append = '\nReaction by Kitsu user {0} with {1} upvotes: "{2}".'.format(
-            user['data']['attributes']['name'],
-            reaction['attributes']['upVotesCount'],
-            reaction['attributes']['reaction'])
-    
-    # Fetch cast (anime characters)
-    cast_members = []
-    search_cast = kitsu.anime.get_characters(metadata.id)
-    if search_cast is not None:
-        # TODO: All cast members.
-        for character in search_cast['data']:
-            search_character = kitsu.anime_characters.get(character['id'])
-            cast_members.append({
-                'name': search_character['data']['attributes']['canonicalName'],
-                'role': character['attributes']['role'].capitalize(),
-                'photo': search_character['data']['attributes']['image']['original']
-            })
+        metadata.genres = anime_genres
 
-    # Apply everything
-    metadata.genres = anime_genres
+    if Prefs['apply_studio']
+        anime_studio = None
+        search_productions = kitsu.anime.get_productions(metadata.id)
+        if search_productions is not None:
+            for production_data in search_productions['data']:
+                if production_data['attributes']['role'] == 'studio':
+                    producer = kitsu.anime_productions.get_producer(production_data['id'])
+                    if producer is not None:
+                        anime_studio = producer['data']['attributes']['name']
+        
+        metadata.studio = anime_studio
+    
+    if Prefs['apply_summary']:
+        summary_append = ''
+        search_reactions = kitsu.media_reactions.get(metadata.id)
+        if search_reactions is not None and search_reactions['data'][0] is not None:
+            reaction = search_reactions['data'][0]
+            user = kitsu.media_reactions.get_user(reaction['id'])
+            summary_append = '\nReaction by Kitsu user {0} with {1} upvotes: "{2}".'.format(
+                user['data']['attributes']['name'],
+                reaction['attributes']['upVotesCount'],
+                reaction['attributes']['reaction'])
+        
+        metadata.summary = anime['synopsis'] + summary_append
+    
+    if Prefs['apply_roles']:
+        cast_members = []
+        search_cast = kitsu.anime.get_characters(metadata.id)
+        if search_cast is not None:
+            # TODO: All cast members.
+            for character in search_cast['data']:
+                search_character = kitsu.anime_characters.get(character['id'])
+                cast_members.append({
+                    'name': search_character['data']['attributes']['canonicalName'],
+                    'role': character['attributes']['role'].capitalize(),
+                    'photo': search_character['data']['attributes']['image']['original']
+                })
+        
+        metadata.roles.clear()
+        if cast_members:
+            for cast_member in cast_members:
+                role = metadata.roles.new()
+                role.name = cast_member['name']
+                role.role = cast_member['name']
+                role.photo = cast_member['photo']
+
     # metadata.tags = ?
-    # metadata.collections = ?
-    metadata.duration = (int(anime['episodeLength']) * 60 * 1000) if anime['episodeLength'] is not None else None
-    metadata.rating = float(anime['averageRating']) / 10
-    metadata.title = anime['canonicalTitle']
-    metadata.summary = anime['synopsis'] + summary_append
-    metadata.originally_available_at = datetime.strptime(str(anime['startDate']), '%Y-%m-%d')
-    metadata.content_rating = anime['ageRating']
-    metadata.studio = anime_studio
-    # metadata.countries = ? Countries involved in production of the show
-    if anime['posterImage'] is not None:
-        poster_url = anime['posterImage']['original']
-        if poster_url not in metadata.posters:
-            metadata.posters[poster_url] = Proxy.Preview(requests.get(poster_url).content)
-    # metadata.banners ?
-    if anime['coverImage'] is not None:
-        cover_image_url = anime['coverImage']['original']
-        if cover_image_url not in metadata.art:
-            metadata.art[cover_image_url] = Proxy.Preview(requests.get(cover_image_url).content)
-    # metadata.themes = ? Theme music
 
-    metadata.roles.clear()
-    if cast_members:
-        for cast_member in cast_members:
-            role = metadata.roles.new()
-            role.name = cast_member['name']
-            role.role = cast_member['name']
-            role.photo = cast_member['photo']
+    # metadata.collections = ?
+
+    if Prefs['apply_duration']:
+        metadata.duration = (int(anime['episodeLength']) * 60 * 1000) if anime['episodeLength'] is not None else None
+    
+    if Prefs['apply_rating']:
+        metadata.rating = float(anime['averageRating']) / 10
+
+    if Prefs['apply_title']:
+        metadata.title = anime['canonicalTitle']
+
+    if Prefs['apply_originally_available_at']:
+        metadata.originally_available_at = datetime.strptime(str(anime['startDate']), '%Y-%m-%d')
+    
+    if Prefs['apply_content_rating']
+        metadata.content_rating = anime['ageRating']
+
+    # metadata.countries = ? Countries involved in production of the show
+
+    if Prefs['apply_poster_image']:
+        if anime['posterImage'] is not None:
+            poster_url = anime['posterImage']['original']
+            if poster_url not in metadata.posters:
+                metadata.posters[poster_url] = Proxy.Preview(requests.get(poster_url).content)
+
+    # metadata.banners ?
+
+    if Prefs['apply_cover_image']:
+        if anime['coverImage'] is not None:
+            cover_image_url = anime['coverImage']['original']
+            if cover_image_url not in metadata.art:
+                metadata.art[cover_image_url] = Proxy.Preview(requests.get(cover_image_url).content)
+
+    # metadata.themes = ? Theme music
 
 def updateAnimeTV(metadata, media):
     Log.Info('[' + AGENT_NAME + '] Updating to kitsu id ' + metadata.id + '.')
@@ -147,7 +166,7 @@ class KitsuTV(Agent.TV_Shows):
     name = AGENT_NAME
     languages = AGENT_LANGUAGES
     primary_provider = AGENT_PRIMARY_PROVIDER
-    accepts_from = AGENT_ACCEPTS_FROM
+    contributes_to = AGENT_CONTRIBUTES_TO
 
     def search(self, results, media, lang, manual):
         Log.Info('[' + AGENT_NAME + '] Received a search for KitsuTV.')
@@ -163,7 +182,6 @@ class KitsuMovie(Agent.Movies):
     name = AGENT_NAME
     languages = AGENT_LANGUAGES
     primary_provider = AGENT_PRIMARY_PROVIDER
-    accepts_from = AGENT_ACCEPTS_FROM
 
     def search(self, results, media, lang, manual):
         Log.Info('Got a search for Movie.')

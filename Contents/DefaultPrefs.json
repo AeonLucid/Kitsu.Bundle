@@ -1,3 +1,68 @@
 [
-    
+    {
+        "id": "apply_genres",
+        "label": "Apply genres",
+        "type": "bool",
+        "default": "true"
+    },
+    {
+        "id": "apply_duration",
+        "label": "Apply duration",
+        "type": "bool",
+        "default": "true"
+    },
+    {
+        "id": "apply_rating",
+        "label": "Apply rating",
+        "type": "bool",
+        "default": "true"
+    },
+    {
+        "id": "apply_title",
+        "label": "Apply title",
+        "type": "bool",
+        "default": "true"
+    },
+    {
+        "id": "apply_summary",
+        "label": "Apply summary (includes top reaction from a Kitsu user)",
+        "type": "bool",
+        "default": "true"
+    },
+    {
+        "id": "apply_originally_available_at",
+        "label": "Apply airing date",
+        "type": "bool",
+        "default": "true"
+    },
+    {
+        "id": "apply_content_rating",
+        "label": "Apply age rating",
+        "type": "bool",
+        "default": "true"
+    },
+    {
+        "id": "apply_studio",
+        "label": "Apply studio",
+        "type": "bool",
+        "default": "true"
+    },
+    {
+        "id": "apply_poster_image",
+        "label": "Apply poster image",
+        "type": "bool",
+        "default": "true"
+    },
+    {
+        "id": "apply_cover_image",
+        "label": "Apply cover image",
+        "type": "bool",
+        "default": "true"
+    },
+    {
+        "id": "apply_roles",
+        "label": "Apply roles (uses anime characters as roles instead of staff)",
+        "type": "bool",
+        "default": "true"
+    }
 ]
