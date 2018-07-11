@@ -38,7 +38,7 @@ def matchAnime(results, search_name, search_year):
         anime_titles = anime['attributes']['titles']
 
         # We assume that the anime is new if startDate wasn't set.
-        if anime['attributes']['startDate']:
+        if anime['attributes']['startDate'] is not None:
             anime_year = anime['attributes']['startDate'].split('-')[0]
         else:
             anime_year = Datetime.Now().year
@@ -127,7 +127,7 @@ def applyAnime(metadata, anime):
     if Prefs['apply_title']:
         metadata.title = anime['canonicalTitle']
 
-    if Prefs['apply_originally_available_at'] and anime['startDate']:
+    if Prefs['apply_originally_available_at'] and anime['startDate'] is not None:
         metadata.originally_available_at = datetime.strptime(str(anime['startDate']), '%Y-%m-%d')
     
     if Prefs['apply_content_rating']:
