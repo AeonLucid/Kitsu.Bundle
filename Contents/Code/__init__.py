@@ -36,7 +36,12 @@ def matchAnime(results, search_name, search_year):
         anime_id = anime['id']
         anime_title = anime['attributes']['canonicalTitle']
         anime_titles = anime['attributes']['titles']
-        anime_year = anime['attributes']['startDate'].split('-')[0]
+
+        # We assume that the anime is new if startDate wasn't set.
+        if anime['attributes']['startDate']:
+            anime_year = anime['attributes']['startDate'].split('-')[0]
+        else:
+            anime_year = Datetime.Now().year
 
         for title_key, title in anime_titles.iteritems():
             if title is not None:
@@ -122,7 +127,7 @@ def applyAnime(metadata, anime):
     if Prefs['apply_title']:
         metadata.title = anime['canonicalTitle']
 
-    if Prefs['apply_originally_available_at']:
+    if Prefs['apply_originally_available_at'] and anime['startDate']:
         metadata.originally_available_at = datetime.strptime(str(anime['startDate']), '%Y-%m-%d')
     
     if Prefs['apply_content_rating']:
@@ -179,8 +184,6 @@ class KitsuTV(Agent.TV_Shows):
             return
         
         # Normal search.
-        Log.Info(media.primary_metadata)
-        Log.Info(media.primary_agent)
         matchAnime(results, media.show, media.year)
         return
 
